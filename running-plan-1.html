@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Mon Programme Course</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --card: #ffffff;
+    --border: #e8e6e0;
+    --text: #1a1a18;
+    --muted: #8a8880;
+    --accent-1: #2d6a4f;
+    --accent-2: #e07b39;
+    --done: #2d6a4f;
+    --tag-bg: #eef4f1;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 90px;
+  }
+  .header {
+    background: var(--text);
+    color: white;
+    padding: 20px 20px 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+  .header-sub { font-size: 12px; color: rgba(255,255,255,0.5); margin-top: 2px; margin-bottom: 14px; }
+  .progress-bar-wrap { background: rgba(255,255,255,0.12); border-radius: 4px; height: 4px; }
+  .progress-bar-fill { height: 4px; border-radius: 4px; background: #6fcf97; transition: width 0.5s ease; }
+  .progress-label { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 6px; }
+
+  .phase-tabs {
+    display: flex;
+    background: white;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .phase-tabs::-webkit-scrollbar { display: none; }
+  .phase-tab {
+    flex: 1 0 auto;
+    padding: 12px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 0.2s;
+  }
+  .phase-tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 700; }
+
+  .main { padding: 16px; }
+
+  .phase-header {
+    background: var(--card);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--border);
+  }
+  .phase-goal { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .phase-pills { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+  .pill {
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--tag-bg);
+    color: var(--accent-1);
+    font-weight: 500;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .week-card {
+    background: var(--card);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    border: 1px solid var(--border);
+    overflow: hidden;
+  }
+  .week-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .week-label { font-size: 14px; font-weight: 600; }
+  .week-meta { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .week-right { display: flex; align-items: center; gap: 10px; }
+  .week-progress { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .chevron { font-size: 14px; color: var(--muted); transition: transform 0.2s; display: inline-block; }
+  .chevron.open { transform: rotate(180deg); }
+
+  .sessions-wrap { border-top: 1px solid var(--border); }
+  .session { padding: 14px 16px; border-bottom: 1px solid var(--border); }
+  .session:last-child { border-bottom: none; }
+  .session-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .session-name { font-size: 13px; font-weight: 600; }
+  .session-name.done-name { color: var(--done); }
+  .session-plan { font-size: 11px; color: var(--muted); margin-top: 2px; line-height: 1.5; }
+  .session-notes { font-size: 11px; color: #bbb; line-height: 1.5; margin-bottom: 8px; }
+
+  .check-btn {
+    flex-shrink: 0;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    transition: all 0.2s;
+    color: white;
+  }
+  .check-btn.done { background: var(--done); border-color: var(--done); }
+
+  .session-form {
+    margin-top: 10px;
+    background: var(--bg);
+    border-radius: 8px;
+    padding: 12px;
+  }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .form-group { display: flex; flex-direction: column; gap: 4px; }
+  .form-group label { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; }
+  .form-group input, .form-group textarea {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 9px 10px;
+    font-size: 14px;
+    font-family: 'DM Sans', sans-serif;
+    background: white;
+    color: var(--text);
+    outline: none;
+    width: 100%;
+  }
+  .form-group input:focus, .form-group textarea:focus { border-color: var(--accent-1); }
+  .form-group textarea { resize: none; height: 60px; }
+
+  .rpe-row { margin-bottom: 8px; }
+  .rpe-label { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.5px; text-transform: uppercase; margin-bottom: 6px; }
+  .rpe-btns { display: flex; gap: 4px; }
+  .rpe-btn {
+    flex: 1;
+    height: 32px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    background: white;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    color: #555;
+  }
+  .rpe-btn.selected { background: var(--text); color: white; border-color: var(--text); }
+
+  .btn-row { display: flex; gap: 8px; margin-top: 4px; }
+  .save-btn {
+    flex: 1;
+    padding: 10px;
+    background: var(--text);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .cancel-btn {
+    padding: 10px 14px;
+    background: white;
+    color: #666;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .delete-btn {
+    padding: 10px 14px;
+    background: white;
+    color: #c0392b;
+    border: 1px solid #f0d0cc;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+
+  .saved-data {
+    margin-top: 10px;
+    background: var(--tag-bg);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+  .saved-line { display: flex; flex-wrap: wrap; gap: 4px 14px; color: #444; }
+  .saved-note { font-size: 11px; color: var(--muted); margin-top: 6px; font-style: italic; }
+  .edit-link { font-size: 11px; color: var(--accent-1); cursor: pointer; text-decoration: underline; margin-top: 6px; display: inline-block; background: none; border: none; padding: 0; font-family: 'DM Sans', sans-serif; }
+  .mark-link { font-size: 12px; color: var(--accent-1); background: none; border: none; cursor: pointer; padding: 2px 0; font-family: 'DM Sans', sans-serif; }
+
+  /* FREE SESSIONS */
+  .free-section {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+  }
+  .free-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 16px;
+    background: #fdf6f0;
+    border-bottom: 1px solid #f5e6d8;
+  }
+  .free-title { font-size: 14px; font-weight: 600; color: var(--accent-2); }
+  .free-sub { font-size: 11px; color: #c99a6e; margin-top: 1px; }
+  .add-free-btn {
+    background: var(--accent-2);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .free-item { padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .free-item:last-child { border-bottom: none; }
+  .free-item-top { display: flex; justify-content: space-between; align-items: flex-start; }
+  .free-item-name { font-size: 13px; font-weight: 600; color: var(--accent-2); }
+  .free-item-date { font-size: 11px; color: var(--muted); margin-top: 1px; }
+  .free-empty { padding: 16px; font-size: 12px; color: #bbb; text-align: center; }
+
+  .bottom-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0; right: 0;
+    background: white;
+    border-top: 1px solid var(--border);
+    display: flex;
+    z-index: 200;
+  }
+  .nav-btn {
+    flex: 1;
+    padding: 10px 8px 14px;
+    border: none;
+    background: none;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+  }
+  .nav-btn .nav-icon { font-size: 18px; }
+  .nav-btn.active { color: var(--text); font-weight: 700; }
+
+  .stats-page { display: none; padding: 16px; }
+  .stats-page.visible { display: block; }
+  #planPage.hidden { display: none; }
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .stat-card {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+  }
+  .stat-card h3 { font-size: 11px; color: var(--muted); font-weight: 500; margin-bottom: 6px; }
+  .stat-big { font-size: 24px; font-weight: 700; font-family: 'DM Mono', monospace; letter-spacing: -1px; }
+  .stat-sub { font-size: 11px; color: #bbb; margin-top: 2px; }
+  .stat-block {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+  .stat-block h3 { font-size: 12px; color: #555; font-weight: 600; margin-bottom: 12px; }
+  .history-item { padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .history-item:last-child { border-bottom: none; }
+  .history-name { font-size: 13px; font-weight: 500; }
+  .history-name.free-tag { color: var(--accent-2); }
+  .history-meta { font-size: 12px; color: var(--muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+  .history-note { font-size: 11px; color: #bbb; font-style: italic; margin-top: 3px; }
+  .vo2-chart { display: flex; align-items: flex-end; gap: 6px; height: 85px; }
+  .vo2-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .vo2-bar { width: 100%; background: #e8f4ed; border-radius: 4px 4px 0 0; min-height: 4px; }
+  .vo2-bar.current { background: var(--accent-1); }
+  .vo2-num { font-size: 10px; font-weight: 700; color: #bbb; font-family: 'DM Mono', monospace; }
+  .vo2-num.current { color: var(--accent-1); }
+  .vo2-lbl { font-size: 9px; color: #bbb; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🏃 Mon Programme</h1>
+  <div class="header-sub">Objectif : 10 km en 50–55 min · Septembre</div>
+  <div class="progress-bar-wrap">
+    <div class="progress-bar-fill" id="globalProgress" style="width:0%"></div>
+  </div>
+  <div class="progress-label" id="globalProgressLabel">0 séances complétées</div>
+</div>
+
+<div id="planPage">
+  <div class="phase-tabs" id="phaseTabs"></div>
+  <div class="main" id="planContent"></div>
+</div>
+
+<div class="stats-page" id="statsPage"></div>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="navPlan" onclick="showPage('plan')">
+    <span class="nav-icon">📋</span>Programme
+  </button>
+  <button class="nav-btn" id="navStats" onclick="showPage('stats')">
+    <span class="nav-icon">📈</span>Statistiques
+  </button>
+</nav>
+
+<script>
+const PHASES = [
+  {
+    label: "Phase 1 — Juin",
+    goal: "Reconstruire la base aérobie · 1 séance/semaine · RPE cible 5–6",
+    pills: ["1 séance/sem", "RPE 5–6", "Endurance"],
+    weeks: [
+      { week: "Semaine 1", seances: [
+        { name: "Endurance fondamentale", plan: "5 km · 6:45–7:00/km · RPE 5–6", notes: "Plat si possible. Tu dois pouvoir parler. Marche les montées raides." }
+      ]},
+      { week: "Semaine 2", seances: [
+        { name: "Endurance fondamentale", plan: "5.5 km · 6:45–7:00/km · RPE 5–6", notes: "Même ressenti que S1. Régularité > vitesse." }
+      ]},
+      { week: "Semaine 3", seances: [
+        { name: "Endurance fondamentale", plan: "6 km · 6:30–6:45/km · RPE 5–6", notes: "Légère hausse de distance. Si RPE > 6, ralentis." }
+      ]},
+      { week: "Semaine 4", seances: [
+        { name: "Endurance fondamentale", plan: "6.5 km · 6:30–6:45/km · RPE 5–6", notes: "Tu dois finir cette sortie en ayant l'impression de pouvoir continuer." }
+      ]},
+    ]
+  },
+  {
+    label: "Phase 2 — Juil/Août",
+    goal: "Construire le volume et l'endurance spécifique · 2 séances/semaine",
+    pills: ["2 séances/sem", "RPE 5–7", "Volume"],
+    weeks: [
+      { week: "Semaine 5", seances: [
+        { name: "Sortie longue lente", plan: "7 km · 6:30–6:45/km · RPE 5–6", notes: "Priorité de la semaine. Allure conversationnelle." },
+        { name: "Sortie courte active", plan: "4 km · 6:00–6:15/km · RPE 6–7", notes: "48–72h après la longue." }
+      ]},
+      { week: "Semaine 6", seances: [
+        { name: "Sortie longue lente", plan: "7.5 km · 6:30/km · RPE 5–6", notes: "Progression douce. Écoute ton corps." },
+        { name: "Sortie courte active", plan: "4 km · 5:55–6:10/km · RPE 6–7", notes: "Maintien de la dynamique." }
+      ]},
+      { week: "Semaine 7", seances: [
+        { name: "Sortie longue lente", plan: "8 km · 6:30/km · RPE 5–6", notes: "Premier cap psychologique important." },
+        { name: "Fractions courtes", plan: "5 km total · 2km écha + 5×400m à 5:30/km · récup 90s", notes: "Introduction progressive des fractions." }
+      ]},
+      { week: "Semaine 8 — Récup ⚠️", seances: [
+        { name: "Récupération", plan: "5 km · 6:45/km · RPE 4–5", notes: "Semaine allégée OBLIGATOIRE. C'est là que le corps s'adapte." },
+        { name: "Sortie légère", plan: "3 km · Libre · RPE 4–5", notes: "Très facile. Plaisir uniquement." }
+      ]},
+      { week: "Semaine 9", seances: [
+        { name: "Sortie longue lente", plan: "8.5 km · 6:20–6:30/km · RPE 6", notes: "Reprise après récup. Tu devrais te sentir mieux." },
+        { name: "Fractions moyennes", plan: "6 km total · 2km écha + 4×600m à 5:20/km", notes: "Augmentation du volume de fractions." }
+      ]},
+      { week: "Semaine 10", seances: [
+        { name: "Sortie longue lente", plan: "9 km · 6:20/km · RPE 6", notes: "Quasi 10km. Gère ton allure sur les 3 derniers km." },
+        { name: "Tempo court", plan: "5 km · 5:45–6:00/km · RPE 7", notes: "Allure cible 10km sur 5km. Exigeant mais faisable." }
+      ]},
+      { week: "Semaine 11 — Test 🎯", seances: [
+        { name: "10 km test", plan: "10 km · 6:10–6:20/km · RPE 7", notes: "Pas un chrono maximal. Objectif : finir les 10km en aisance relative." },
+        { name: "Récupération active", plan: "3 km · Très lent · RPE 3–4", notes: "Footing de récup uniquement." }
+      ]},
+    ]
+  },
+  {
+    label: "Phase 3 — Septembre",
+    goal: "Affûtage et objectif 10km en 50–55min",
+    pills: ["2–3 séances/sem", "RPE 6–8", "Affûtage"],
+    weeks: [
+      { week: "Semaine 12", seances: [
+        { name: "Sortie longue", plan: "9 km · 6:10/km · RPE 6–7", notes: "Maintien du volume. Allure plus soutenue." },
+        { name: "Fractions intensives", plan: "6 km total · 2km écha + 6×400m à 5:00/km", notes: "Développement de la vitesse spécifique." },
+        { name: "Endurance courte (optionnel)", plan: "4 km · 6:30/km · RPE 5", notes: "Optionnel si fatigue. Ne force pas." }
+      ]},
+      { week: "Semaine 13 — Simulation 🎯", seances: [
+        { name: "Simulation 10km", plan: "10 km · 5:30–5:45/km · RPE 8", notes: "Objectif : 55–57min. Pars à 5:45/km, accélère si possible." },
+        { name: "Récupération", plan: "4 km · Libre · RPE 4", notes: "Récup obligatoire après simulation." }
+      ]},
+      { week: "Semaine 14 — Affûtage", seances: [
+        { name: "Sortie affûtage", plan: "6 km · 6:00–6:15/km · RPE 6", notes: "Réduction du volume. Conserve l'intensité." },
+        { name: "Fractions courtes", plan: "4 km total · 3×400m allure vive", notes: "Maintien de la vivacité. Pas de fatigue accumulée." }
+      ]},
+      { week: "Semaine 15 — OBJECTIF 🏁", seances: [
+        { name: "10 km objectif", plan: "10 km · 5:00–5:30/km · RPE 8–9", notes: "Pars à 5:30/km les 5 premiers km. Objectif : 50–55min." }
+      ]},
+    ]
+  }
+];
+
+// ===== State =====
+let currentPhase = 0;
+let expandedWeeks = {};
+let sessionData = {};   // keyed: p0_w0_s0
+let freeSessions = [];  // [{id, date, name, km, time, rpe, vo2, note}]
+let editingKey = null;      // session key being edited
+let editingFreeId = null;   // free session id being edited
+let addingFree = false;
+let currentPage = 'plan';
+
+function getKey(pi, wi, si) { return 'p'+pi+'_w'+wi+'_s'+si; }
+
+function loadData() {
+  try { sessionData = JSON.parse(localStorage.getItem('runData') || '{}'); } catch(e) { sessionData = {}; }
+  try { freeSessions = JSON.parse(localStorage.getItem('runFree') || '[]'); } catch(e) { freeSessions = []; }
+}
+function saveData() {
+  localStorage.setItem('runData', JSON.stringify(sessionData));
+  localStorage.setItem('runFree', JSON.stringify(freeSessions));
+}
+
+function totalSessions() {
+  let t = 0;
+  PHASES.forEach(function(p){ p.weeks.forEach(function(w){ t += w.seances.length; }); });
+  return t;
+}
+function doneSessions() {
+  return Object.keys(sessionData).filter(function(k){ return sessionData[k] && sessionData[k].done; }).length;
+}
+
+function updateGlobalProgress() {
+  var total = totalSessions();
+  var done = doneSessions();
+  var freeCount = freeSessions.length;
+  var pct = total ? Math.round(done/total*100) : 0;
+  document.getElementById('globalProgress').style.width = pct + '%';
+  var label = done + ' séance' + (done>1?'s':'') + ' programme sur ' + total;
+  if (freeCount > 0) label += ' · +' + freeCount + ' libre' + (freeCount>1?'s':'');
+  document.getElementById('globalProgressLabel').textContent = label;
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  var parts = d.split('-');
+  if (parts.length !== 3) return d;
+  return parts[2] + '/' + parts[1] + '/' + parts[0];
+}
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+// ===== Rendering =====
+function renderPhaseTabs() {
+  var el = document.getElementById('phaseTabs');
+  var html = '';
+  PHASES.forEach(function(p, i) {
+    html += '<button class="phase-tab ' + (i===currentPhase?'active':'') + '" onclick="switchPhase(' + i + ')">' + p.label + '</button>';
+  });
+  el.innerHTML = html;
+}
+
+function switchPhase(i) {
+  currentPhase = i;
+  expandedWeeks = {};
+  editingKey = null;
+  renderPhaseTabs();
+  renderPlan();
+}
+
+function sessionFormHTML(prefix, vals) {
+  vals = vals || {};
+  var rpeButtons = '';
+  for (var n = 1; n <= 10; n++) {
+    rpeButtons += '<button class="rpe-btn ' + (vals.rpe == n ? 'selected' : '') + '" onclick="selectRpe(\'' + prefix + '\',' + n + ')">' + n + '</button>';
+  }
+  var nameField = '';
+  if (prefix.indexOf('free') === 0) {
+    nameField =
+      '<div class="form-group" style="margin-bottom:8px">' +
+        '<label>Type de sortie</label>' +
+        '<input type="text" id="name_' + prefix + '" value="' + esc(vals.name) + '" placeholder="Footing libre, sortie vélo-course, etc.">' +
+      '</div>';
+  }
+  return '<div class="session-form">' +
+    nameField +
+    '<div class="form-row">' +
+      '<div class="form-group"><label>Distance (km)</label><input type="number" step="0.1" id="km_' + prefix + '" value="' + esc(vals.km) + '" placeholder="5.2"></div>' +
+      '<div class="form-group"><label>Temps (mm:ss)</label><input type="text" id="time_' + prefix + '" value="' + esc(vals.time) + '" placeholder="31:49"></div>' +
+    '</div>' +
+    '<div class="form-row">' +
+      '<div class="form-group"><label>VO2max (Garmin)</label><input type="number" step="0.5" id="vo2_' + prefix + '" value="' + esc(vals.vo2) + '" placeholder="44"></div>' +
+      '<div class="form-group"><label>Date</label><input type="date" id="date_' + prefix + '" value="' + esc(vals.date) + '"></div>' +
+    '</div>' +
+    '<div class="rpe-row"><div class="rpe-label">RPE ressenti</div><div class="rpe-btns" id="rpe_' + prefix + '">' + rpeButtons + '</div></div>' +
+    '<div class="form-group" style="margin-bottom:10px"><label>Notes libres</label><textarea id="note_' + prefix + '" placeholder="Comment tu t\'es senti...">' + esc(vals.note) + '</textarea></div>' +
+    '<div class="btn-row">' +
+      '<button class="save-btn" onclick="saveForm(\'' + prefix + '\')">Enregistrer</button>' +
+      '<button class="cancel-btn" onclick="cancelForm(\'' + prefix + '\')">Annuler</button>' +
+      (prefix.indexOf('free_edit') === 0 ? '<button class="delete-btn" onclick="deleteFree(\'' + prefix + '\')">Suppr.</button>' : '') +
+    '</div>' +
+  '</div>';
+}
+
+var rpeTemp = {};
+
+function selectRpe(prefix, val) {
+  rpeTemp[prefix] = val;
+  var container = document.getElementById('rpe_' + prefix);
+  if (!container) return;
+  var btns = container.querySelectorAll('.rpe-btn');
+  btns.forEach(function(b, i) {
+    if (i + 1 === val) b.classList.add('selected');
+    else b.classList.remove('selected');
+  });
+}
+
+function renderFreeSection() {
+  var sorted = freeSessions.slice().sort(function(a,b){ return (b.date||'').localeCompare(a.date||''); });
+  var html = '<div class="free-section">' +
+    '<div class="free-header">' +
+      '<div><div class="free-title">🔥 Sorties libres</div><div class="free-sub">Hors programme — comptées dans les stats</div></div>' +
+      '<button class="add-free-btn" onclick="openAddFree()">+ Ajouter</button>' +
+    '</div>';
+
+  if (addingFree) {
+    var today = new Date().toISOString().slice(0,10);
+    html += '<div style="padding:12px 16px;">' + sessionFormHTML('free_new', { date: today }) + '</div>';
+  }
+
+  if (sorted.length === 0 && !addingFree) {
+    html += '<div class="free-empty">Aucune sortie libre. Une sortie en plus du programme ? Ajoute-la ici.</div>';
+  } else {
+    sorted.forEach(function(f) {
+      if (editingFreeId === f.id) {
+        html += '<div class="free-item">' + sessionFormHTML('free_edit_' + f.id, f) + '</div>';
+      } else {
+        var metaParts = [];
+        if (f.km) metaParts.push('📍 <b>' + esc(f.km) + ' km</b>');
+        if (f.time) metaParts.push('⏱ <b>' + esc(f.time) + '</b>');
+        if (f.rpe) metaParts.push('💪 RPE <b>' + f.rpe + '/10</b>');
+        if (f.vo2) metaParts.push('❤️ VO2 <b>' + esc(f.vo2) + '</b>');
+        html += '<div class="free-item">' +
+          '<div class="free-item-top"><div>' +
+            '<div class="free-item-name">' + esc(f.name || 'Sortie libre') + '</div>' +
+            '<div class="free-item-date">' + fmtDate(f.date) + '</div>' +
+          '</div></div>' +
+          (metaParts.length ? '<div class="saved-line" style="margin-top:6px;font-size:12px;">' + metaParts.join('<span></span>') + '</div>' : '') +
+          (f.note ? '<div class="saved-note">' + esc(f.note) + '</div>' : '') +
+          '<button class="edit-link" onclick="editFree(\'' + f.id + '\')">Modifier</button>' +
+        '</div>';
+      }
+    });
+  }
+  html += '</div>';
+  return html;
+}
+
+function renderPlan() {
+  var phase = PHASES[currentPhase];
+  var el = document.getElementById('planContent');
+  var html = '';
+
+  // Free sessions section at top
+  html += renderFreeSection();
+
+  html += '<div class="phase-header">' +
+    '<div class="phase-goal">' + phase.goal + '</div>' +
+    '<div class="phase-pills">' + phase.pills.map(function(p){ return '<span class="pill">' + p + '</span>'; }).join('') + '</div>' +
+  '</div>';
+
+  phase.weeks.forEach(function(week, wi) {
+    var totalW = week.seances.length;
+    var doneW = 0;
+    week.seances.forEach(function(_, si) {
+      var d = sessionData[getKey(currentPhase, wi, si)];
+      if (d && d.done) doneW++;
+    });
+    var open = expandedWeeks[wi];
+    html += '<div class="week-card">' +
+      '<div class="week-header" onclick="toggleWeek(' + wi + ')">' +
+        '<div><div class="week-label">' + week.week + '</div><div class="week-meta">' + totalW + ' séance' + (totalW>1?'s':'') + '</div></div>' +
+        '<div class="week-right"><span class="week-progress" style="' + (doneW===totalW && doneW>0 ? 'color:var(--done);font-weight:700;' : '') + '">' + doneW + '/' + totalW + '</span><span class="chevron ' + (open?'open':'') + '">▾</span></div>' +
+      '</div>';
+    if (open) {
+      html += '<div class="sessions-wrap">';
+      week.seances.forEach(function(s, si) {
+        html += renderSession(currentPhase, wi, si, s);
+      });
+      html += '</div>';
+    }
+    html += '</div>';
+  });
+  el.innerHTML = html;
+}
+
+function renderSession(pi, wi, si, s) {
+  var key = getKey(pi, wi, si);
+  var data = sessionData[key] || {};
+  var done = !!data.done;
+  var isEditing = editingKey === key;
+
+  var html = '<div class="session">' +
+    '<div class="session-top">' +
+      '<div style="flex:1"><div class="session-name ' + (done?'done-name':'') + '">' + esc(s.name) + '</div>' +
+      '<div class="session-plan">' + esc(s.plan) + '</div></div>' +
+      '<button class="check-btn ' + (done?'done':'') + '" onclick="toggleDone(\'' + key + '\')">' + (done?'✓':'') + '</button>' +
+    '</div>' +
+    '<div class="session-notes">' + esc(s.notes) + '</div>';
+
+  if (done && !isEditing) {
+    var parts = [];
+    if (data.km) parts.push('📍 <b>' + esc(data.km) + ' km</b>');
+    if (data.time) parts.push('⏱ <b>' + esc(data.time) + '</b>');
+    if (data.rpe) parts.push('💪 RPE <b>' + data.rpe + '/10</b>');
+    if (data.vo2) parts.push('❤️ VO2 <b>' + esc(data.vo2) + '</b>');
+    if (data.date) parts.push('📅 <b>' + fmtDate(data.date) + '</b>');
+    html += '<div class="saved-data">' +
+      (parts.length ? '<div class="saved-line">' + parts.join('<span></span>') + '</div>' : '<div style="color:#999">Marquée comme faite</div>') +
+      (data.note ? '<div class="saved-note">' + esc(data.note) + '</div>' : '') +
+      '<button class="edit-link" onclick="editSession(\'' + key + '\')">Modifier</button>' +
+    '</div>';
+  }
+
+  if (isEditing) {
+    html += sessionFormHTML(key, data);
+  }
+
+  if (!done && !isEditing) {
+    html += '<button class="mark-link" onclick="toggleDone(\'' + key + '\')">+ Marquer comme faite</button>';
+  }
+
+  html += '</div>';
+  return html;
+}
+
+// ===== Actions plan sessions =====
+function toggleWeek(wi) {
+  expandedWeeks[wi] = !expandedWeeks[wi];
+  renderPlan();
+}
+
+function toggleDone(key) {
+  if (!sessionData[key]) sessionData[key] = {};
+  sessionData[key].done = !sessionData[key].done;
+  if (sessionData[key].done) {
+    editingKey = key;
+    rpeTemp[key] = sessionData[key].rpe || null;
+  } else {
+    delete sessionData[key];
+    editingKey = null;
+  }
+  saveData();
+  updateGlobalProgress();
+  renderPlan();
+}
+
+function editSession(key) {
+  editingKey = key;
+  rpeTemp[key] = (sessionData[key] && sessionData[key].rpe) || null;
+  renderPlan();
+}
+
+// ===== Free sessions =====
+function openAddFree() {
+  addingFree = true;
+  editingFreeId = null;
+  rpeTemp['free_new'] = null;
+  renderPlan();
+}
+
+function editFree(id) {
+  editingFreeId = id;
+  addingFree = false;
+  var f = freeSessions.find(function(x){ return x.id === id; });
+  rpeTemp['free_edit_' + id] = f ? f.rpe : null;
+  renderPlan();
+}
+
+function deleteFree(prefix) {
+  var id = prefix.replace('free_edit_', '');
+  if (!confirm('Supprimer cette sortie libre ?')) return;
+  freeSessions = freeSessions.filter(function(f){ return f.id !== id; });
+  editingFreeId = null;
+  saveData();
+  updateGlobalProgress();
+  renderPlan();
+}
+
+// ===== Shared form save/cancel =====
+function readForm(prefix) {
+  function v(id) { var e = document.getElementById(id + '_' + prefix); return e ? e.value : ''; }
+  var out = {
+    km: v('km'), time: v('time'), vo2: v('vo2'),
+    date: v('date'), note: v('note'),
+    rpe: rpeTemp[prefix] || null
+  };
+  var nameEl = document.getElementById('name_' + prefix);
+  if (nameEl) out.name = nameEl.value;
+  return out;
+}
+
+function saveForm(prefix) {
+  var vals = readForm(prefix);
+  if (prefix === 'free_new') {
+    freeSessions.push({
+      id: 'f' + Date.now(),
+      name: vals.name || 'Sortie libre',
+      km: vals.km, time: vals.time, vo2: vals.vo2,
+      date: vals.date, rpe: vals.rpe, note: vals.note
+    });
+    addingFree = false;
+  } else if (prefix.indexOf('free_edit_') === 0) {
+    var id = prefix.replace('free_edit_', '');
+    var f = freeSessions.find(function(x){ return x.id === id; });
+    if (f) {
+      f.name = vals.name || 'Sortie libre';
+      f.km = vals.km; f.time = vals.time; f.vo2 = vals.vo2;
+      f.date = vals.date; f.rpe = vals.rpe; f.note = vals.note;
+    }
+    editingFreeId = null;
+  } else {
+    // plan session
+    if (!sessionData[prefix]) sessionData[prefix] = {};
+    sessionData[prefix].km = vals.km;
+    sessionData[prefix].time = vals.time;
+    sessionData[prefix].vo2 = vals.vo2;
+    sessionData[prefix].date = vals.date;
+    sessionData[prefix].note = vals.note;
+    sessionData[prefix].rpe = vals.rpe;
+    sessionData[prefix].done = true;
+    editingKey = null;
+  }
+  saveData();
+  updateGlobalProgress();
+  renderPlan();
+}
+
+function cancelForm(prefix) {
+  if (prefix === 'free_new') addingFree = false;
+  else if (prefix.indexOf('free_edit_') === 0) editingFreeId = null;
+  else editingKey = null;
+  renderPlan();
+}
+
+// ===== Pages =====
+function showPage(page) {
+  currentPage = page;
+  document.getElementById('planPage').classList.toggle('hidden', page !== 'plan');
+  document.getElementById('statsPage').classList.toggle('visible', page === 'stats');
+  document.getElementById('navPlan').classList.toggle('active', page === 'plan');
+  document.getElementById('navStats').classList.toggle('active', page === 'stats');
+  if (page === 'stats') renderStats();
+}
+
+function renderStats() {
+  var el = document.getElementById('statsPage');
+  var totalKm = 0, totalMin = 0;
+  var history = [];
+  var vo2entries = [];
+
+  function addTime(t) {
+    if (!t) return;
+    var parts = t.split(':');
+    if (parts.length === 2) {
+      var m = parseInt(parts[0], 10), s = parseInt(parts[1], 10);
+      if (!isNaN(m) && !isNaN(s)) totalMin += m + s/60;
+    }
+  }
+
+  // Plan sessions
+  PHASES.forEach(function(phase, pi) {
+    phase.weeks.forEach(function(week, wi) {
+      week.seances.forEach(function(s, si) {
+        var d = sessionData[getKey(pi, wi, si)];
+        if (d && d.done) {
+          if (d.km) totalKm += parseFloat(d.km) || 0;
+          addTime(d.time);
+          if (d.vo2) vo2entries.push({ val: parseFloat(d.vo2), date: d.date || '', label: week.week.replace('Semaine ', 'S').split(' ')[0] });
+          history.push({ name: s.name, free: false, km: d.km, time: d.time, rpe: d.rpe, vo2: d.vo2, date: d.date, note: d.note });
+        }
+      });
+    });
+  });
+
+  // Free sessions
+  freeSessions.forEach(function(f) {
+    if (f.km) totalKm += parseFloat(f.km) || 0;
+    addTime(f.time);
+    if (f.vo2) vo2entries.push({ val: parseFloat(f.vo2), date: f.date || '', label: 'Libre' });
+    history.push({ name: f.name || 'Sortie libre', free: true, km: f.km, time: f.time, rpe: f.rpe, vo2: f.vo2, date: f.date, note: f.note });
+  });
+
+  // Sort history by date desc (sessions without date go last)
+  history.sort(function(a, b) {
+    return (b.date || '0000').localeCompare(a.date || '0000');
+  });
+
+  // Sort vo2 by date asc
+  vo2entries.sort(function(a, b) {
+    return (a.date || '9999').localeCompare(b.date || '9999');
+  });
+  var vo2vals = [{ val: 44, label: 'Départ' }].concat(vo2entries);
+
+  var done = doneSessions();
+  var total = totalSessions();
+  var freeCount = freeSessions.length;
+  var totalSorties = done + freeCount;
+  var lastVo2 = vo2vals[vo2vals.length - 1].val;
+  var diffVo2 = lastVo2 - 44;
+
+  var html = '<div class="stat-grid">' +
+    '<div class="stat-card"><h3>SORTIES TOTALES</h3><div class="stat-big">' + totalSorties + '</div><div class="stat-sub">' + done + ' programme + ' + freeCount + ' libre' + (freeCount>1?'s':'') + '</div></div>' +
+    '<div class="stat-card"><h3>PROGRAMME</h3><div class="stat-big">' + done + '/' + total + '</div><div class="stat-sub">' + Math.round(done/total*100) + '% complété</div></div>' +
+    '<div class="stat-card"><h3>DISTANCE</h3><div class="stat-big">' + totalKm.toFixed(1) + '<span style="font-size:14px;font-weight:400"> km</span></div><div class="stat-sub">' + Math.round(totalMin) + ' min au total</div></div>' +
+    '<div class="stat-card"><h3>VO2MAX</h3><div class="stat-big">' + lastVo2 + '</div><div class="stat-sub">' + (vo2vals.length > 1 ? (diffVo2 >= 0 ? '+' : '') + diffVo2.toFixed(1) + ' vs départ' : 'départ') + '</div></div>' +
+  '</div>';
+
+  // VO2 chart
+  if (vo2vals.length > 1) {
+    var maxV = Math.max.apply(null, vo2vals.map(function(v){ return v.val; })) + 2;
+    var minV = Math.min.apply(null, vo2vals.map(function(v){ return v.val; })) - 2;
+    var cols = '';
+    vo2vals.forEach(function(v, i) {
+      var h = Math.max(6, Math.round((v.val - minV) / (maxV - minV) * 60));
+      var isLast = i === vo2vals.length - 1;
+      cols += '<div class="vo2-col">' +
+        '<div class="vo2-num ' + (isLast?'current':'') + '">' + v.val + '</div>' +
+        '<div class="vo2-bar ' + (isLast?'current':'') + '" style="height:' + h + 'px"></div>' +
+        '<div class="vo2-lbl">' + esc(v.label) + '</div>' +
+      '</div>';
+    });
+    html += '<div class="stat-block"><h3>Évolution VO2max</h3><div class="vo2-chart">' + cols + '</div></div>';
+  }
+
+  // History
+  html += '<div class="stat-block"><h3>Historique</h3>';
+  if (history.length === 0) {
+    html += '<div style="font-size:13px;color:#bbb">Aucune séance enregistrée</div>';
+  } else {
+    history.forEach(function(h) {
+      var meta = [];
+      if (h.date) meta.push(fmtDate(h.date));
+      if (h.km) meta.push(h.km + ' km');
+      if (h.time) meta.push(h.time);
+      if (h.rpe) meta.push('RPE ' + h.rpe);
+      if (h.vo2) meta.push('VO2 ' + h.vo2);
+      html += '<div class="history-item">' +
+        '<div class="history-name ' + (h.free?'free-tag':'') + '">' + (h.free?'🔥 ':'') + esc(h.name) + '</div>' +
+        '<div class="history-meta">' + meta.join(' · ') + '</div>' +
+        (h.note ? '<div class="history-note">' + esc(h.note) + '</div>' : '') +
+      '</div>';
+    });
+  }
+  html += '</div>';
+
+  el.innerHTML = html;
+}
+
+// Init
+loadData();
+renderPhaseTabs();
+renderPlan();
+updateGlobalProgress();
+</script>
+</body>
+</html>
